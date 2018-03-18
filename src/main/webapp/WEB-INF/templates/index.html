@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Contacts-sync</title>
+</head>
+<body>
+<h1>Contacts-sync!</h1>
+<p>Go to the <a href="/app">Contacts-sync app</a></p>
+<div th:if="${userSession != null}">
+    You are authenticated as:
+    <ul>
+        <li>Display name: <span th:text="${userSession.displayName}">Display Name</span></li>
+        <li>Email: <span th:text="${userSession.email}">Display Name</span></li>
+        <li>Id: <span th:text="${userSession.userId}">0123456789</span></li>
+        <li>Picture: <img th:src="${userSession.picture}"/></li>
+    </ul>
+    <a href="/logout">Log out</a>
+</div>
+<div th:if="${userSession == null}">
+    You are not authenticated. <a href="/login">Log in</a>.
+</div>
+</body>
+</html>
