@@ -1,6 +1,6 @@
 # Contacts-sync
 
-Sync LinkedIn to Google contacts
+Sync LinkedIn to Gmail contacts
 
 Maintainer:
 
