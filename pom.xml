@@ -9,7 +9,7 @@
     <version>0.1-SNAPSHOT</version>
 
     <name>contacts-sync</name>
-    <description>Sync LinkedIn to Google contacts</description>
+    <description>Sync LinkedIn to Gmail contacts</description>
     <url>https://github.com/softwareloop/contacts-sync</url>
 
     <licenses>
@@ -71,6 +71,12 @@
             <scope>provided</scope>
         </dependency>
 
+        <!-- IntelliJ IDEA annotations -->
+        <dependency>
+            <groupId>com.intellij</groupId>
+            <artifactId>annotations</artifactId>
+            <version>12.0</version>
+        </dependency>
 
         <dependency>
             <groupId>org.springframework.boot</groupId>

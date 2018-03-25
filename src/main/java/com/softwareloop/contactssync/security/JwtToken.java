@@ -1,6 +1,8 @@
 package com.softwareloop.contactssync.security;
 
 import lombok.Data;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
@@ -30,7 +32,10 @@ public class JwtToken {
     public JwtToken() {
     }
 
-    public JwtToken(String header, String payload, byte[] signature) {
+    public JwtToken(
+            @NotNull String header,
+            @NotNull String payload,
+            @Nullable byte[] signature) {
         this.header = header;
         this.payload = payload;
         this.signature = signature;
@@ -57,6 +62,7 @@ public class JwtToken {
     // Methods
     //--------------------------------------------------------------------------
 
+    @NotNull
     public String toTokenString() {
         StringBuilder sb = new StringBuilder();
         sb.append(encode(header));
@@ -69,12 +75,14 @@ public class JwtToken {
         return sb.toString();
     }
 
-    private String encode(String text) {
+    @NotNull
+    private String encode(@NotNull String text) {
         return BASE_64_ENCODER.encodeToString(
                 text.getBytes(StandardCharsets.UTF_8));
     }
 
-    private static String decode(String text) {
+    @NotNull
+    private static String decode(@NotNull String text) {
         byte[] bytes = BASE_64_DECODER.decode(text);
         return new String(bytes, StandardCharsets.UTF_8);
     }

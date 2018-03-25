@@ -156,11 +156,11 @@ public class AuthController {
                         TokenResponse.class);
         TokenResponse tokenResponse = response.getBody();
 
-        String accessToken = tokenResponse.getAccess_token();
-        String refreshToken = tokenResponse.getRefresh_token();
+        String accessToken = tokenResponse.getAccessToken();
+        String refreshToken = tokenResponse.getRefreshToken();
 
         // Extract the OpenId payload
-        String idToken = tokenResponse.getId_token();
+        String idToken = tokenResponse.getIdToken();
         JwtToken jwtToken = JwtToken.fromTokenString(idToken);
         IdTokenPayload idTokenPayload = new ObjectMapper()
                 .readValue(jwtToken.getPayload(), IdTokenPayload.class);
