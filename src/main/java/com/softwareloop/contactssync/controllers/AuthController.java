@@ -49,6 +49,9 @@ public class AuthController {
     private final Random random = new Random();
 
     @Getter
+    private final ObjectMapper objectMapper;
+
+    @Getter
     private final RestTemplate restTemplate;
 
     @Getter
@@ -66,14 +69,17 @@ public class AuthController {
     @Value("${google.userAuthorizationUri}")
     private String googleUserAuthorizationUri;
 
-    @Autowired
-    public AuthController(RestTemplate restTemplate) {
-        this.restTemplate = restTemplate;
-    }
-
     //--------------------------------------------------------------------------
     // Constructors
     //--------------------------------------------------------------------------
+
+    @Autowired
+    public AuthController(
+            ObjectMapper objectMapper,
+            RestTemplate restTemplate) {
+        this.objectMapper = objectMapper;
+        this.restTemplate = restTemplate;
+    }
 
     //--------------------------------------------------------------------------
     // Interface implementations
@@ -162,7 +168,7 @@ public class AuthController {
         // Extract the OpenId payload
         String idToken = tokenResponse.getIdToken();
         JwtToken jwtToken = JwtToken.fromTokenString(idToken);
-        IdTokenPayload idTokenPayload = new ObjectMapper()
+        IdTokenPayload idTokenPayload = objectMapper
                 .readValue(jwtToken.getPayload(), IdTokenPayload.class);
         String userId = idTokenPayload.getSub();
 

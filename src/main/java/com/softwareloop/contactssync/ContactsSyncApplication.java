@@ -1,5 +1,6 @@
 package com.softwareloop.contactssync;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.softwareloop.contactssync.security.UserSessionArgumentResolver;
 import com.softwareloop.contactssync.security.UserSessionInterceptor;
 import org.springframework.boot.SpringApplication;
@@ -36,7 +37,7 @@ public class ContactsSyncApplication extends WebMvcConfigurerAdapter {
     //--------------------------------------------------------------------------
 
     //--------------------------------------------------------------------------
-    // Interface implementations
+    // WebMvcConfigurerAdapter overrides
     //--------------------------------------------------------------------------
 
     @Override
@@ -47,7 +48,7 @@ public class ContactsSyncApplication extends WebMvcConfigurerAdapter {
 
     @Override
     public void addInterceptors(InterceptorRegistry interceptorRegistry) {
-        interceptorRegistry.addInterceptor(myInterceptor());
+        interceptorRegistry.addInterceptor(userSessionInterceptor());
     }
 
     @Override
@@ -61,7 +62,7 @@ public class ContactsSyncApplication extends WebMvcConfigurerAdapter {
     //--------------------------------------------------------------------------
 
     @Bean
-    public UserSessionInterceptor myInterceptor() {
+    public UserSessionInterceptor userSessionInterceptor() {
         return new UserSessionInterceptor();
     }
 
@@ -84,6 +85,11 @@ public class ContactsSyncApplication extends WebMvcConfigurerAdapter {
     @Bean
     public RestTemplate restTemplate() {
         return new RestTemplate();
+    }
+
+    @Bean
+    public ObjectMapper objectMapper() {
+        return new ObjectMapper();
     }
 
     //--------------------------------------------------------------------------
