@@ -543,3 +543,23 @@ a img{
 .android-title, .android-mobile-title {
     color: black;
 }
+
+.android-drawer.mdl-layout__drawer {
+    width: fit-content;
+}
+
+.android-drawer .mdl-layout-title {
+    line-height: normal;
+    padding: 20px;
+}
+
+.android-drawer .user-display-name {
+    font-weight: bold;
+}
+.android-drawer .user-email {
+
+}
+
+.mdl-layout__drawer .mdl-navigation .mdl-navigation__link {
+    padding: 16px 20px;
+}

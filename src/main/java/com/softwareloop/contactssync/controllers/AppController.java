@@ -46,7 +46,8 @@ public class AppController {
     @GetMapping("/")
     public String index(UserSession userSession, Model model) {
         if (userSession != null) {
-            model.addAttribute(userSession);
+            // user already logged in;
+            return "redirect:/app";
         }
         return "index";
     }

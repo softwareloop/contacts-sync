@@ -35,7 +35,7 @@
     <script src="/static/external/angular-1.6.9/angular-animate.js"></script>
     <script src="/static/js/module.js"></script>
     <script src="/static/js/services/UserSession.js"></script>
-    <script src="/static/js/controllers/DrawerController.js"></script>
+    <script src="/static/js/drawer/DrawerController.js"></script>
     <base href="/app"/>
 </head>
 <body ng-app="app">
@@ -43,9 +43,7 @@
 
     <div class="android-header mdl-layout__header mdl-layout__header--waterfall">
         <div class="mdl-layout__header-row">
-          <span class="android-title mdl-layout-title">
-            Contacts sync
-          </span>
+            <span class="android-title mdl-layout-title">CONTACTS SYNC</span>
             <!-- Add spacer, to align navigation to the right in desktop -->
             <div class="android-header-spacer mdl-layout-spacer"></div>
             <div class="android-search-box mdl-textfield mdl-js-textfield mdl-textfield--expandable mdl-textfield--floating-label mdl-textfield--align-right mdl-textfield--full-width">
@@ -56,22 +54,21 @@
                     <input class="mdl-textfield__input" type="text" id="search-field"/>
                 </div>
             </div>
-            <span class="android-mobile-title mdl-layout-title">
-            Contacts sync
-          </span>
+            <span class="android-mobile-title mdl-layout-title">CONTACTS SYNC</span>
         </div>
     </div>
 
     <div class="android-drawer mdl-layout__drawer" ng-controller="DrawerController as drawerController">
         <div class="mdl-layout-title">
-            <img width="32" height="32" ng-src="{{drawerController.userSession.picture}}"/>
-            <span ng-bind="drawerController.userSession.displayName"></span>
+            <div><img width="50" height="50" ng-src="{{drawerController.userSession.picture}}"/></div>
+            <div class="user-display-name" ng-bind="drawerController.userSession.displayName"></div>
+            <div class="user-email" ng-bind="drawerController.userSession.email"></div>
         </div>
         <nav class="mdl-navigation">
             <a class="mdl-navigation__link" href="">Contacts</a>
             <a class="mdl-navigation__link" href="">Sync</a>
             <a class="mdl-navigation__link" href="">Settings</a>
-            <a class="mdl-navigation__link" href="">Log out</a>
+            <a class="mdl-navigation__link" href="/logout">Log out</a>
         </nav>
     </div>
 
