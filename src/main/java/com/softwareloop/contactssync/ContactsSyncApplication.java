@@ -3,6 +3,7 @@ package com.softwareloop.contactssync;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.softwareloop.contactssync.security.UserSessionArgumentResolver;
 import com.softwareloop.contactssync.security.SecurityInterceptor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
@@ -14,6 +15,7 @@ import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
 import org.springframework.web.servlet.view.InternalResourceView;
 import org.springframework.web.servlet.view.InternalResourceViewResolver;
+import org.springframework.web.util.UrlPathHelper;
 
 import java.util.List;
 
@@ -31,6 +33,9 @@ public class ContactsSyncApplication extends WebMvcConfigurerAdapter {
     //--------------------------------------------------------------------------
     // Dependencies
     //--------------------------------------------------------------------------
+
+    @Autowired
+    private UrlPathHelper urlPathHelper;
 
     //--------------------------------------------------------------------------
     // Constructors
@@ -63,7 +68,7 @@ public class ContactsSyncApplication extends WebMvcConfigurerAdapter {
 
     @Bean
     public SecurityInterceptor userSessionInterceptor() {
-        return new SecurityInterceptor();
+        return new SecurityInterceptor(urlPathHelper);
     }
 
     @Bean
