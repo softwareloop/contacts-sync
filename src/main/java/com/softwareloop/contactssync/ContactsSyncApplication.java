@@ -2,7 +2,7 @@ package com.softwareloop.contactssync;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.softwareloop.contactssync.security.UserSessionArgumentResolver;
-import com.softwareloop.contactssync.security.UserSessionInterceptor;
+import com.softwareloop.contactssync.security.SecurityInterceptor;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
@@ -62,8 +62,8 @@ public class ContactsSyncApplication extends WebMvcConfigurerAdapter {
     //--------------------------------------------------------------------------
 
     @Bean
-    public UserSessionInterceptor userSessionInterceptor() {
-        return new UserSessionInterceptor();
+    public SecurityInterceptor userSessionInterceptor() {
+        return new SecurityInterceptor();
     }
 
     @Bean

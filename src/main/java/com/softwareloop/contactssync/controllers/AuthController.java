@@ -101,7 +101,7 @@ public class AuthController {
                 POST_AUTH_REDIRECT_ATTRIBUTE, postAuthRedirect);
 
         // Generate Oauth2 state
-        String oauth2State = generateRandomString(16);
+        String oauth2State = generateRandomString();
         httpSession.setAttribute(OAUTH2_STATE_ATTRIBUTE, oauth2State);
 
         // Build authorization URI
@@ -172,12 +172,13 @@ public class AuthController {
                 .readValue(jwtToken.getPayload(), IdTokenPayload.class);
         String userId = idTokenPayload.getSub();
 
-        // Set the user session properties
-        UserSession userSession = new UserSession();
-        userSession.setUserId(userId);
-        userSession.setDisplayName(idTokenPayload.getName());
-        userSession.setEmail(idTokenPayload.getEmail());
-        userSession.setPicture(idTokenPayload.getPicture());
+        // Create the user session
+        UserSession userSession = new UserSession(
+                userId,
+                idTokenPayload.getName(),
+                idTokenPayload.getEmail(),
+                idTokenPayload.getPicture(),
+                generateRandomString());
         httpSession.setAttribute(USER_SESSION_ATTRIBUTE, userSession);
 
         if (postAuthRedirect != null) {
@@ -196,8 +197,8 @@ public class AuthController {
         return "redirect:/";
     }
 
-    public String generateRandomString(int entropyBytes) {
-        byte[] buffer = new byte[entropyBytes];
+    public String generateRandomString() {
+        byte[] buffer = new byte[16];
         random.nextBytes(buffer);
         return new String(Base64.getEncoder().encode(buffer));
     }
