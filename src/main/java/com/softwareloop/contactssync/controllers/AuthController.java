@@ -5,9 +5,11 @@ import com.softwareloop.contactssync.security.IdTokenPayload;
 import com.softwareloop.contactssync.security.JwtToken;
 import com.softwareloop.contactssync.security.TokenResponse;
 import com.softwareloop.contactssync.security.UserSession;
+import com.softwareloop.contactssync.util.TextUtils;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
@@ -24,8 +26,6 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import javax.servlet.http.HttpSession;
-import java.util.Base64;
-import java.util.Random;
 
 import static com.softwareloop.contactssync.security.SecurityConstants.*;
 
@@ -41,12 +41,6 @@ public class AuthController {
     //--------------------------------------------------------------------------
     // Constants
     //--------------------------------------------------------------------------
-
-    //--------------------------------------------------------------------------
-    // Fields
-    //--------------------------------------------------------------------------
-
-    private final Random random = new Random();
 
     @Getter
     private final ObjectMapper objectMapper;
@@ -86,26 +80,32 @@ public class AuthController {
     //--------------------------------------------------------------------------
 
     //--------------------------------------------------------------------------
-    // Methods
+    // Login
     //--------------------------------------------------------------------------
 
     @RequestMapping("/login")
     public String login(
             HttpSession httpSession,
+            UserSession userSession,
             @RequestParam(
                     value = POST_AUTH_REDIRECT_ATTRIBUTE,
                     required = false
             ) String postAuthRedirect
     ) {
+        checkUserNotLoggedIn(userSession);
+
         httpSession.setAttribute(
                 POST_AUTH_REDIRECT_ATTRIBUTE, postAuthRedirect);
 
-        // Generate Oauth2 state
-        String oauth2State = generateRandomString();
+        String oauth2State = TextUtils.generate128BitRandomString();
         httpSession.setAttribute(OAUTH2_STATE_ATTRIBUTE, oauth2State);
 
-        // Build authorization URI
-        UriComponentsBuilder uriBuilder = UriComponentsBuilder
+        String authorizationUri = createAuthorizationUri(oauth2State);
+        return "redirect:" + authorizationUri;
+    }
+
+    private String createAuthorizationUri(String oauth2State) {
+        return UriComponentsBuilder
                 .fromUriString(googleUserAuthorizationUri)
                 .queryParam("access_type", "offline")
                 .queryParam("client_id", googleClientId)
@@ -113,13 +113,16 @@ public class AuthController {
                         "http://localhost:8080/google-login-callback")
                 .queryParam("response_type", "code")
                 .queryParam("scope", "openid email profile")
-                .queryParam("state", oauth2State);
-
-        return "redirect:" + uriBuilder.toUriString();
+                .queryParam("state", oauth2State)
+                .toUriString();
     }
 
+    //--------------------------------------------------------------------------
+    // Google login callback
+    //--------------------------------------------------------------------------
+
     @RequestMapping("/google-login-callback")
-    public String login(
+    public String googleLoginCallback(
             @RequestParam("code") String code,
             @RequestParam(value = "error", required = false) String error,
             @RequestParam("state") String state,
@@ -127,9 +130,15 @@ public class AuthController {
                     value = POST_AUTH_REDIRECT_ATTRIBUTE,
                     required = false
             ) String postAuthRedirect,
-            @SessionAttribute(OAUTH2_STATE_ATTRIBUTE) String expectedState,
-            HttpSession httpSession
+            @SessionAttribute(
+                    value = OAUTH2_STATE_ATTRIBUTE,
+                    required = false
+            ) String expectedState,
+            HttpSession httpSession,
+            UserSession userSession
     ) throws Exception {
+        checkUserNotLoggedIn(userSession);
+
         httpSession.removeAttribute(POST_AUTH_REDIRECT_ATTRIBUTE);
         httpSession.removeAttribute(OAUTH2_STATE_ATTRIBUTE);
 
@@ -137,11 +146,32 @@ public class AuthController {
             throw new Exception("Error");
         }
 
+        checkOauth2StateMatches(state, expectedState);
+
+        TokenResponse tokenResponse = exchangeCodeForTokenResponse(code);
+
+        String accessToken = tokenResponse.getAccessToken();
+        String refreshToken = tokenResponse.getRefreshToken();
+
+        IdTokenPayload idTokenPayload = extractIdTokenPayload(tokenResponse);
+
+        userSession = createUserSession(idTokenPayload);
+        httpSession.setAttribute(USER_SESSION_ATTRIBUTE, userSession);
+
+        if (postAuthRedirect != null) {
+            return "redirect:" + postAuthRedirect;
+        } else {
+            return "redirect:/";
+        }
+    }
+
+    private void checkOauth2StateMatches(String state, String expectedState) {
         if (!state.equals(expectedState)) {
             throw new IllegalArgumentException("OAuth2 state mismatch");
         }
+    }
 
-        // Exchange the code for a authorisation/refresh tokens
+    private TokenResponse exchangeCodeForTokenResponse(String code) {
         MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
         headers.add(HttpHeaders.CONTENT_TYPE,
                 MediaType.APPLICATION_FORM_URLENCODED.toString());
@@ -160,33 +190,35 @@ public class AuthController {
                         "https://www.googleapis.com/oauth2/v4/token",
                         request,
                         TokenResponse.class);
-        TokenResponse tokenResponse = response.getBody();
+        return response.getBody();
+    }
 
-        String accessToken = tokenResponse.getAccessToken();
-        String refreshToken = tokenResponse.getRefreshToken();
-
-        // Extract the OpenId payload
+    private IdTokenPayload extractIdTokenPayload(
+            TokenResponse tokenResponse
+    ) throws java.io.IOException {
         String idToken = tokenResponse.getIdToken();
         JwtToken jwtToken = JwtToken.fromTokenString(idToken);
-        IdTokenPayload idTokenPayload = objectMapper
+        return objectMapper
                 .readValue(jwtToken.getPayload(), IdTokenPayload.class);
-        String userId = idTokenPayload.getSub();
+    }
 
-        // Create the user session
-        UserSession userSession = new UserSession(
-                userId,
+    @NotNull
+    private UserSession createUserSession(
+            @NotNull IdTokenPayload idTokenPayload
+    ) {
+        UserSession userSession;
+        userSession = new UserSession(
+                idTokenPayload.getSub(),
                 idTokenPayload.getName(),
                 idTokenPayload.getEmail(),
                 idTokenPayload.getPicture(),
-                generateRandomString());
-        httpSession.setAttribute(USER_SESSION_ATTRIBUTE, userSession);
-
-        if (postAuthRedirect != null) {
-            return "redirect:" + postAuthRedirect;
-        } else {
-            return "redirect:/";
-        }
+                TextUtils.generate128BitRandomString());
+        return userSession;
     }
+
+    //--------------------------------------------------------------------------
+    // Logout
+    //--------------------------------------------------------------------------
 
     @RequestMapping("/logout")
     public String logout(
@@ -197,9 +229,16 @@ public class AuthController {
         return "redirect:/";
     }
 
-    public String generateRandomString() {
-        byte[] buffer = new byte[16];
-        random.nextBytes(buffer);
-        return new String(Base64.getEncoder().encode(buffer));
+    //--------------------------------------------------------------------------
+    // Utility methods
+    //--------------------------------------------------------------------------
+
+    private void checkUserNotLoggedIn(UserSession userSession) {
+        if (userSession != null) {
+            throw new IllegalArgumentException(
+                    "You are already already logged in");
+        }
     }
+
+
 }

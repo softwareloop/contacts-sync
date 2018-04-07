@@ -1,5 +1,6 @@
 package com.softwareloop.contactssync.security;
 
+import com.softwareloop.contactssync.util.TextUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.servlet.handler.HandlerInterceptorAdapter;
 
@@ -52,7 +53,7 @@ public class UserSessionInterceptor extends HandlerInterceptorAdapter {
                 response.sendRedirect(String.format(
                         "/login?%s=%s",
                         POST_AUTH_REDIRECT_ATTRIBUTE,
-                        URLEncoder.encode(fullPath, "UTF-8")));
+                        TextUtils.urlEncode(fullPath)));
             } else {
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             }

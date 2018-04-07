@@ -35,7 +35,10 @@ public class ContactsSyncApplication extends WebMvcConfigurerAdapter {
     //--------------------------------------------------------------------------
 
     @Autowired
-    private UrlPathHelper urlPathHelper;
+    public SecurityInterceptor securityInterceptor;
+
+    @Autowired
+    public UserSessionArgumentResolver userSessionArgumentResolver;
 
     //--------------------------------------------------------------------------
     // Constructors
@@ -53,28 +56,18 @@ public class ContactsSyncApplication extends WebMvcConfigurerAdapter {
 
     @Override
     public void addInterceptors(InterceptorRegistry interceptorRegistry) {
-        interceptorRegistry.addInterceptor(userSessionInterceptor());
+        interceptorRegistry.addInterceptor(securityInterceptor);
     }
 
     @Override
     public void addArgumentResolvers(
             List<HandlerMethodArgumentResolver> argumentResolvers) {
-        argumentResolvers.add(userSessionArgumentResolver());
+        argumentResolvers.add(userSessionArgumentResolver);
     }
 
     //--------------------------------------------------------------------------
     // Beans
     //--------------------------------------------------------------------------
-
-    @Bean
-    public SecurityInterceptor userSessionInterceptor() {
-        return new SecurityInterceptor(urlPathHelper);
-    }
-
-    @Bean
-    public UserSessionArgumentResolver userSessionArgumentResolver() {
-        return new UserSessionArgumentResolver();
-    }
 
     @Bean
     public ViewResolver viewResolver() {
