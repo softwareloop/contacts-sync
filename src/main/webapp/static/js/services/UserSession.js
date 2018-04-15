@@ -1,3 +1,1 @@
-angular.module('app').factory('userSession', function ($window) {
-    return $window.userSession;
-});
+angular.module('app').constant('userSession', window.userSession);
