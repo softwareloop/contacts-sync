@@ -1,31 +1,24 @@
 package com.softwareloop.contactssync.controllers;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.softwareloop.contactssync.security.IdTokenPayload;
-import com.softwareloop.contactssync.security.JwtToken;
-import com.softwareloop.contactssync.security.TokenResponse;
+import com.google.api.client.auth.oauth2.AuthorizationCodeFlow;
+import com.google.api.client.auth.oauth2.AuthorizationCodeRequestUrl;
+import com.google.api.client.auth.oauth2.Credential;
+import com.google.api.client.auth.openidconnect.IdToken;
+import com.google.api.client.googleapis.auth.oauth2.GoogleTokenResponse;
+import com.google.api.client.json.jackson2.JacksonFactory;
 import com.softwareloop.contactssync.security.UserSession;
 import com.softwareloop.contactssync.util.TextUtils;
 import lombok.Getter;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.SessionAttribute;
-import org.springframework.web.client.RestTemplate;
-import org.springframework.web.util.UriComponentsBuilder;
 
 import javax.servlet.http.HttpSession;
+import java.io.IOException;
 
 import static com.softwareloop.contactssync.security.SecurityConstants.*;
 
@@ -42,26 +35,17 @@ public class AuthController {
     // Constants
     //--------------------------------------------------------------------------
 
-    @Getter
-    private final ObjectMapper objectMapper;
+    //--------------------------------------------------------------------------
+    // Variables
+    //--------------------------------------------------------------------------
 
     @Getter
-    private final RestTemplate restTemplate;
+    private final AuthorizationCodeFlow flow;
 
     @Getter
-    @Setter
-    @Value("${google.clientId}")
-    private String googleClientId;
+    private final JacksonFactory jacksonFactory;
 
-    @Getter
-    @Setter
-    @Value("${google.clientSecret}")
-    private String googleClientSecret;
-
-    @Getter
-    @Setter
-    @Value("${google.userAuthorizationUri}")
-    private String googleUserAuthorizationUri;
+    private String redirectUri = "http://localhost:8080/google-login-callback";
 
     //--------------------------------------------------------------------------
     // Constructors
@@ -69,10 +53,11 @@ public class AuthController {
 
     @Autowired
     public AuthController(
-            ObjectMapper objectMapper,
-            RestTemplate restTemplate) {
-        this.objectMapper = objectMapper;
-        this.restTemplate = restTemplate;
+            AuthorizationCodeFlow flow,
+            JacksonFactory jacksonFactory
+    ) {
+        this.flow = flow;
+        this.jacksonFactory = jacksonFactory;
     }
 
     //--------------------------------------------------------------------------
@@ -105,16 +90,11 @@ public class AuthController {
     }
 
     private String createAuthorizationUri(String oauth2State) {
-        return UriComponentsBuilder
-                .fromUriString(googleUserAuthorizationUri)
-                .queryParam("access_type", "offline")
-                .queryParam("client_id", googleClientId)
-                .queryParam("redirect_uri",
-                        "http://localhost:8080/google-login-callback")
-                .queryParam("response_type", "code")
-                .queryParam("scope", "openid email profile")
-                .queryParam("state", oauth2State)
-                .toUriString();
+        AuthorizationCodeRequestUrl authorizationUrl =
+                flow.newAuthorizationUrl();
+        authorizationUrl.setRedirectUri(redirectUri);
+        authorizationUrl.setState(oauth2State);
+        return authorizationUrl.build();
     }
 
     //--------------------------------------------------------------------------
@@ -148,15 +128,19 @@ public class AuthController {
 
         checkOauth2StateMatches(state, expectedState);
 
-        TokenResponse tokenResponse = exchangeCodeForTokenResponse(code);
+        GoogleTokenResponse googleTokenResponse =
+                exchangeCodeForTokenResponse(code);
 
-        String accessToken = tokenResponse.getAccessToken();
-        String refreshToken = tokenResponse.getRefreshToken();
-
-        IdTokenPayload idTokenPayload = extractIdTokenPayload(tokenResponse);
+        IdToken.Payload idTokenPayload =
+                extractIdTokenPayload(googleTokenResponse);
 
         userSession = createUserSession(idTokenPayload);
         httpSession.setAttribute(USER_SESSION_ATTRIBUTE, userSession);
+
+        // Store the credential
+        Credential credential =
+                flow.createAndStoreCredential(
+                        googleTokenResponse, userSession.getUserId());
 
         if (postAuthRedirect != null) {
             return "redirect:" + postAuthRedirect;
@@ -171,47 +155,33 @@ public class AuthController {
         }
     }
 
-    private TokenResponse exchangeCodeForTokenResponse(String code) {
-        MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
-        headers.add(HttpHeaders.CONTENT_TYPE,
-                MediaType.APPLICATION_FORM_URLENCODED.toString());
-
-        MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
-        map.add("code", code);
-        map.add("grant_type", "authorization_code");
-        map.add("redirect_uri", "http://localhost:8080/google-login-callback");
-        map.add("scope", "openid email profile");
-        map.add("client_id", googleClientId);
-        map.add("client_secret", googleClientSecret);
-        HttpEntity<MultiValueMap<String, String>> request =
-                new HttpEntity<>(map, headers);
-        ResponseEntity<TokenResponse> response =
-                restTemplate.postForEntity(
-                        "https://www.googleapis.com/oauth2/v4/token",
-                        request,
-                        TokenResponse.class);
-        return response.getBody();
+    private GoogleTokenResponse exchangeCodeForTokenResponse(
+            String code
+    ) throws IOException {
+        return (GoogleTokenResponse)
+                flow.newTokenRequest(code)
+                        .setRedirectUri(redirectUri)
+                        .execute();
     }
 
-    private IdTokenPayload extractIdTokenPayload(
-            TokenResponse tokenResponse
+    private IdToken.Payload extractIdTokenPayload(
+            GoogleTokenResponse tokenResponse
     ) throws java.io.IOException {
-        String idToken = tokenResponse.getIdToken();
-        JwtToken jwtToken = JwtToken.fromTokenString(idToken);
-        return objectMapper
-                .readValue(jwtToken.getPayload(), IdTokenPayload.class);
+        String idTokenString = tokenResponse.getIdToken();
+        IdToken idToken = IdToken.parse(jacksonFactory, idTokenString);
+        return idToken.getPayload();
     }
 
     @NotNull
     private UserSession createUserSession(
-            @NotNull IdTokenPayload idTokenPayload
+            @NotNull IdToken.Payload idTokenPayload
     ) {
         UserSession userSession;
         userSession = new UserSession(
-                idTokenPayload.getSub(),
-                idTokenPayload.getName(),
-                idTokenPayload.getEmail(),
-                idTokenPayload.getPicture(),
+                idTokenPayload.getSubject(),
+                (String) idTokenPayload.get("name"),
+                (String) idTokenPayload.get("email"),
+                (String) idTokenPayload.get("picture"),
                 TextUtils.generate128BitRandomString());
         return userSession;
     }

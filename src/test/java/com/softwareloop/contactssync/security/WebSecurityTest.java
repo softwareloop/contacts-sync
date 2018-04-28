@@ -1,6 +1,9 @@
 package com.softwareloop.contactssync.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.api.client.auth.oauth2.AuthorizationCodeFlow;
+import com.google.api.client.auth.openidconnect.IdToken;
+import com.google.api.client.googleapis.auth.oauth2.GoogleTokenResponse;
 import com.softwareloop.contactssync.ContactsSyncApplication;
 import org.junit.Assert;
 import org.junit.Before;
@@ -51,10 +54,6 @@ public class WebSecurityTest {
 
     @Autowired
     private MockMvc mockMvc;
-
-    @MockBean
-    private RestTemplate restTemplate;
-
 
     private UserSession userSession;
     private MockHttpSession httpSession;
@@ -142,7 +141,7 @@ public class WebSecurityTest {
         Assert.assertNotNull(state);
         Assert.assertEquals(32, state.length());
         resultActions.andExpect(header().string("Location",
-                "https://accounts.google.com/o/oauth2/auth?access_type=offline&client_id=client_id&redirect_uri=http://localhost:8080/google-login-callback&response_type=code&scope=openid%20email%20profile&state=" + state));
+                "https://accounts.google.com/o/oauth2/auth?access_type=offline&client_id=client_id&redirect_uri=http://localhost:8080/google-login-callback&response_type=code&scope=openid%20email%20profile%20https://www.googleapis.com/auth/contacts&state=" + state));
         expectStandardHeaders(resultActions);
 
         String postAuthRedirect = (String) httpSession.getAttribute(
@@ -171,85 +170,6 @@ public class WebSecurityTest {
             Assert.fail("Exception expected but not thrown");
         } catch (Exception e) {
             Assert.assertEquals("You are already already logged in",
-                    NestedExceptionUtils.getRootCause(e).getMessage());
-        }
-    }
-
-    //--------------------------------------------------------------------------
-    // Tests: /google-login-callback
-    // http://localhost:8080/google-login-callback?state=1234&code=4/ABCD&authuser=0&session_state=5678&prompt=none
-    //--------------------------------------------------------------------------
-
-    @Test
-    public void testLoginCallback() throws Exception {
-        Assert.assertNull(httpSession.getAttribute(USER_SESSION_ATTRIBUTE));
-
-        IdTokenPayload idTokenPayload = new IdTokenPayload();
-        idTokenPayload.setSub("1234567890");
-        idTokenPayload.setEmail("peter.white@example.com");
-        idTokenPayload.setName("Peter White");
-        idTokenPayload.setPicture("Picture URL");
-        JwtToken jwtToken = new JwtToken(
-                "header",
-                objectMapper.writeValueAsString(idTokenPayload),
-                null);
-        TokenResponse tokenResponse = new TokenResponse();
-        tokenResponse.setIdToken(jwtToken.toTokenString());
-        ResponseEntity response =
-                new ResponseEntity<>(tokenResponse, HttpStatus.OK);
-        Mockito.when(restTemplate.postForEntity(
-                Mockito.anyString(), Mockito.any(), Mockito.any()))
-                .thenReturn(response);
-
-        httpSession.setAttribute(OAUTH2_STATE_ATTRIBUTE, "1234");
-        ResultActions resultActions =
-                mockMvc.perform(get(GOOGLE_LOGIN_CALLBACK_URL).session(httpSession))
-                        .andExpect(status().is3xxRedirection())
-                        .andExpect(content().string(""))
-                        .andExpect(header().string("Location", "/"));
-        expectStandardHeaders(resultActions);
-
-        UserSession userSession =
-                (UserSession) httpSession.getAttribute(USER_SESSION_ATTRIBUTE);
-        Assert.assertNotNull(userSession);
-        Assert.assertEquals("1234567890", userSession.getUserId());
-        Assert.assertEquals("peter.white@example.com", userSession.getEmail());
-        Assert.assertEquals("Peter White", userSession.getDisplayName());
-        Assert.assertEquals("Picture URL", userSession.getPicture());
-        Assert.assertNotNull(userSession.getCsrfToken());
-    }
-
-    @Test
-    public void testLoginCallbackAsLoggedIn() {
-        logInProgrammatically();
-        try {
-            mockMvc.perform(get(GOOGLE_LOGIN_CALLBACK_URL).session(httpSession));
-            Assert.fail("Exception expected but not thrown");
-        } catch (Exception e) {
-            Assert.assertEquals("You are already already logged in",
-                    NestedExceptionUtils.getRootCause(e).getMessage());
-        }
-    }
-
-    @Test
-    public void testLoginCallbackNoOauthState() {
-        try {
-            mockMvc.perform(get(GOOGLE_LOGIN_CALLBACK_URL).session(httpSession));
-            Assert.fail("Exception expected but not thrown");
-        } catch (Exception e) {
-            Assert.assertEquals("OAuth2 state mismatch",
-                    NestedExceptionUtils.getRootCause(e).getMessage());
-        }
-    }
-
-    @Test
-    public void testLoginCallbackWrongOauthState() {
-        httpSession.setAttribute(OAUTH2_STATE_ATTRIBUTE, "wrong");
-        try {
-            mockMvc.perform(get(GOOGLE_LOGIN_CALLBACK_URL).session(httpSession));
-            Assert.fail("Exception expected but not thrown");
-        } catch (Exception e) {
-            Assert.assertEquals("OAuth2 state mismatch",
                     NestedExceptionUtils.getRootCause(e).getMessage());
         }
     }

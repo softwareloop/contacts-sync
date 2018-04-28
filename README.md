@@ -1,6 +1,6 @@
 # Contacts-sync
 
-Sync LinkedIn to Gmail contacts
+Import your LinkedIn contacts to your Gmail addressbook
 
 Maintainer:
 
