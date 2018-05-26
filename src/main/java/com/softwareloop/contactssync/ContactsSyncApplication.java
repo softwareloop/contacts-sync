@@ -5,12 +5,12 @@ import com.google.api.client.auth.oauth2.AuthorizationCodeFlow;
 import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow;
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.javanet.NetHttpTransport;
-import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.jackson2.JacksonFactory;
-import com.google.api.client.util.store.DataStoreFactory;
-import com.google.api.client.util.store.MemoryDataStoreFactory;
-import com.softwareloop.contactssync.security.UserSessionArgumentResolver;
+import com.mongodb.MongoClient;
+import com.mongodb.client.MongoDatabase;
 import com.softwareloop.contactssync.security.SecurityInterceptor;
+import com.softwareloop.contactssync.security.UserDataStore;
+import com.softwareloop.contactssync.security.UserSessionArgumentResolver;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,9 +26,7 @@ import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
 import org.springframework.web.servlet.view.InternalResourceView;
 import org.springframework.web.servlet.view.InternalResourceViewResolver;
-import org.springframework.web.util.UrlPathHelper;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
@@ -67,10 +65,13 @@ public class ContactsSyncApplication extends WebMvcConfigurerAdapter {
     private String googleClientSecret;
 
     @Autowired
-    public SecurityInterceptor securityInterceptor;
+    private SecurityInterceptor securityInterceptor;
 
     @Autowired
-    public UserSessionArgumentResolver userSessionArgumentResolver;
+    private UserSessionArgumentResolver userSessionArgumentResolver;
+
+    @Autowired
+    private UserDataStore userDataStore;
 
     //--------------------------------------------------------------------------
     // Constructors
@@ -133,7 +134,7 @@ public class ContactsSyncApplication extends WebMvcConfigurerAdapter {
     }
 
     @Bean
-    public AuthorizationCodeFlow authorizationCodeFlow() throws IOException {
+    public AuthorizationCodeFlow authorizationCodeFlow() {
         GoogleAuthorizationCodeFlow.Builder flowBuilder =
                 new GoogleAuthorizationCodeFlow.Builder(
                         netHttpTransport(),
@@ -145,16 +146,20 @@ public class ContactsSyncApplication extends WebMvcConfigurerAdapter {
         // Ugrade the url to the latest version to get more OpenID fields
         flowBuilder.setTokenServerUrl(new GenericUrl(GOOGLE_TOKEN_URL));
 
-        return flowBuilder.setDataStoreFactory(dataStoreFactory())
+        return flowBuilder.setCredentialDataStore(userDataStore)
                 .setAccessType("offline")
                 .build();
     }
 
     @Bean
-    public DataStoreFactory dataStoreFactory() {
-        return new MemoryDataStoreFactory();
+    public MongoClient mongoClient() {
+        return new MongoClient();
     }
 
+    @Bean
+    public MongoDatabase mongoDatabase() {
+        return mongoClient().getDatabase("contactssync");
+    }
 
     //--------------------------------------------------------------------------
     // Methods

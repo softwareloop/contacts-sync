@@ -2,10 +2,11 @@ package com.softwareloop.contactssync.controllers;
 
 import com.google.api.client.auth.oauth2.AuthorizationCodeFlow;
 import com.google.api.client.auth.oauth2.AuthorizationCodeRequestUrl;
-import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.client.auth.openidconnect.IdToken;
 import com.google.api.client.googleapis.auth.oauth2.GoogleTokenResponse;
 import com.google.api.client.json.jackson2.JacksonFactory;
+import com.softwareloop.contactssync.dao.UserDao;
+import com.softwareloop.contactssync.model.User;
 import com.softwareloop.contactssync.security.UserSession;
 import com.softwareloop.contactssync.util.TextUtils;
 import lombok.Getter;
@@ -44,6 +45,7 @@ public class AuthController {
 
     @Getter
     private final JacksonFactory jacksonFactory;
+    private final UserDao userDao;
 
     private String redirectUri = "http://localhost:8080/google-login-callback";
 
@@ -54,10 +56,12 @@ public class AuthController {
     @Autowired
     public AuthController(
             AuthorizationCodeFlow flow,
-            JacksonFactory jacksonFactory
+            JacksonFactory jacksonFactory,
+            UserDao userDao
     ) {
         this.flow = flow;
         this.jacksonFactory = jacksonFactory;
+        this.userDao = userDao;
     }
 
     //--------------------------------------------------------------------------
@@ -138,9 +142,8 @@ public class AuthController {
         httpSession.setAttribute(USER_SESSION_ATTRIBUTE, userSession);
 
         // Store the credential
-        Credential credential =
-                flow.createAndStoreCredential(
-                        googleTokenResponse, userSession.getUserId());
+        flow.createAndStoreCredential(
+                googleTokenResponse, userSession.getUserId());
 
         if (postAuthRedirect != null) {
             return "redirect:" + postAuthRedirect;
@@ -176,12 +179,30 @@ public class AuthController {
     private UserSession createUserSession(
             @NotNull IdToken.Payload idTokenPayload
     ) {
+        String userId = idTokenPayload.getSubject();
+        User user = userDao.getById(userId);
+        boolean newUser = false;
+        if (user == null) {
+            newUser = true;
+            user = new User();
+        }
+        user.setUserId(userId);
+        user.setDisplayName((String) idTokenPayload.get("name"));
+        user.setEmail((String) idTokenPayload.get("email"));
+        user.setPicture((String) idTokenPayload.get("picture"));
+
+        if (newUser) {
+            userDao.insert(user);
+        } else {
+            userDao.update(user);
+        }
+
         UserSession userSession;
         userSession = new UserSession(
-                idTokenPayload.getSubject(),
-                (String) idTokenPayload.get("name"),
-                (String) idTokenPayload.get("email"),
-                (String) idTokenPayload.get("picture"),
+                userId,
+                user.getDisplayName(),
+                user.getEmail(),
+                user.getPicture(),
                 TextUtils.generate128BitRandomString());
         return userSession;
     }

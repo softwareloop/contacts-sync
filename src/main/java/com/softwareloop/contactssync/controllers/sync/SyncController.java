@@ -1,9 +1,7 @@
 package com.softwareloop.contactssync.controllers.sync;
 
-import com.google.api.client.auth.oauth2.AuthorizationCodeFlow;
-import com.google.api.client.auth.oauth2.Credential;
 import com.softwareloop.contactssync.controllers.SimpleResponse;
-import com.softwareloop.contactssync.google.GmailService;
+import com.softwareloop.contactssync.google.GmailSynchronizer;
 import com.softwareloop.contactssync.security.UserSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -24,8 +22,7 @@ public class SyncController {
     // Fields
     //--------------------------------------------------------------------------
 
-    private final AuthorizationCodeFlow flow;
-    private final GmailService gmailService;
+    private final GmailSynchronizer gmailSynchronizer;
 
     //--------------------------------------------------------------------------
     // Constructors
@@ -33,11 +30,9 @@ public class SyncController {
 
     @Autowired
     public SyncController(
-            AuthorizationCodeFlow flow,
-            GmailService gmailService
+            GmailSynchronizer gmailSynchronizer
     ) {
-        this.flow = flow;
-        this.gmailService = gmailService;
+        this.gmailSynchronizer = gmailSynchronizer;
     }
 
     //--------------------------------------------------------------------------
@@ -48,8 +43,7 @@ public class SyncController {
     public SimpleResponse sync(
             UserSession userSession
     ) throws IOException {
-        Credential credential = flow.loadCredential(userSession.getUserId());
-        gmailService.getContacts(credential);
+        gmailSynchronizer.syncContacts(userSession.getUserId());
         return new SimpleResponse("Ok");
     }
 }
