@@ -1,12 +1,12 @@
 package com.softwareloop.contactssync.dao;
 
 import com.mongodb.client.MongoDatabase;
-import com.softwareloop.contactssync.model.User;
+import com.softwareloop.contactssync.model.DbCredential;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
-public class UserDao extends AbstractDao<String, User> {
+public class DbCredentialDao extends AbstractDao<String, DbCredential> {
 
     //--------------------------------------------------------------------------
     // Constants
@@ -21,8 +21,8 @@ public class UserDao extends AbstractDao<String, User> {
     //--------------------------------------------------------------------------
 
     @Autowired
-    public UserDao(MongoDatabase mongoDatabase) {
-        super(mongoDatabase, User.class);
+    public DbCredentialDao(MongoDatabase mongoDatabase) {
+        super(mongoDatabase, DbCredential.class);
     }
 
     //--------------------------------------------------------------------------
@@ -30,7 +30,7 @@ public class UserDao extends AbstractDao<String, User> {
     //--------------------------------------------------------------------------
 
     @Override
-    public String getId(User obj) {
+    public String getId(DbCredential obj) {
         return obj.getUserId();
     }
 

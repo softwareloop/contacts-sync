@@ -6,10 +6,10 @@ import lombok.Data;
 import java.io.Serializable;
 
 @Data
-public class User implements Serializable {
+public class DbCredential implements Serializable {
     @JsonProperty("_id")
     private String userId;
-    private String displayName;
-    private String email;
-    private String picture;
+    private String accessToken;
+    private Long expirationTimeMilliseconds;
+    private String refreshToken;
 }

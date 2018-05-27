@@ -8,8 +8,8 @@ import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.jackson2.JacksonFactory;
 import com.mongodb.MongoClient;
 import com.mongodb.client.MongoDatabase;
+import com.softwareloop.contactssync.security.CredentialDataStore;
 import com.softwareloop.contactssync.security.SecurityInterceptor;
-import com.softwareloop.contactssync.security.UserDataStore;
 import com.softwareloop.contactssync.security.UserSessionArgumentResolver;
 import lombok.Getter;
 import lombok.Setter;
@@ -71,7 +71,7 @@ public class ContactsSyncApplication extends WebMvcConfigurerAdapter {
     private UserSessionArgumentResolver userSessionArgumentResolver;
 
     @Autowired
-    private UserDataStore userDataStore;
+    private CredentialDataStore userDataStore;
 
     //--------------------------------------------------------------------------
     // Constructors

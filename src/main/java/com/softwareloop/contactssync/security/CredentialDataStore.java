@@ -3,8 +3,8 @@ package com.softwareloop.contactssync.security;
 import com.google.api.client.auth.oauth2.StoredCredential;
 import com.google.api.client.util.store.DataStore;
 import com.google.api.client.util.store.DataStoreFactory;
-import com.softwareloop.contactssync.dao.UserDao;
-import com.softwareloop.contactssync.model.User;
+import com.softwareloop.contactssync.dao.DbCredentialDao;
+import com.softwareloop.contactssync.model.DbCredential;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -12,7 +12,7 @@ import java.util.Collection;
 import java.util.Set;
 
 @Component
-public class UserDataStore implements DataStore<StoredCredential> {
+public class CredentialDataStore implements DataStore<StoredCredential> {
 
     //--------------------------------------------------------------------------
     // Constants
@@ -22,15 +22,15 @@ public class UserDataStore implements DataStore<StoredCredential> {
     // Fields
     //--------------------------------------------------------------------------
 
-    private final UserDao userDao;
+    private final DbCredentialDao dbCredentialDao;
 
     //--------------------------------------------------------------------------
     // Constructors
     //--------------------------------------------------------------------------
 
     @Autowired
-    public UserDataStore(UserDao userDao) {
-        this.userDao = userDao;
+    public CredentialDataStore(DbCredentialDao dbCredentialDao) {
+        this.dbCredentialDao = dbCredentialDao;
     }
 
     //--------------------------------------------------------------------------
@@ -49,7 +49,7 @@ public class UserDataStore implements DataStore<StoredCredential> {
 
     @Override
     public int size() {
-        return (int) userDao.count();
+        return (int) dbCredentialDao.count();
     }
 
     @Override
@@ -58,8 +58,8 @@ public class UserDataStore implements DataStore<StoredCredential> {
     }
 
     @Override
-    public boolean containsKey(String key) {
-        return userDao.getById(key) != null;
+    public boolean containsKey(String userId) {
+        return dbCredentialDao.getById(userId) != null;
     }
 
     @Override
@@ -78,26 +78,45 @@ public class UserDataStore implements DataStore<StoredCredential> {
     }
 
     @Override
-    public StoredCredential get(String key) {
-        User user = userDao.getById(key);
-        if (user == null) {
+    public StoredCredential get(String userId) {
+        DbCredential dbCredentialDaoById = dbCredentialDao.getById(userId);
+        if (dbCredentialDaoById == null) {
             return null;
         }
 
         StoredCredential result = new StoredCredential();
-        result.setAccessToken(user.getAccessToken());
-        result.setExpirationTimeMilliseconds(user.getExpirationTimeMilliseconds());
-        result.setRefreshToken(user.getRefreshToken());
+        result.setAccessToken(dbCredentialDaoById.getAccessToken());
+        result.setExpirationTimeMilliseconds(dbCredentialDaoById.getExpirationTimeMilliseconds());
+        result.setRefreshToken(dbCredentialDaoById.getRefreshToken());
         return result;
     }
 
     @Override
-    public DataStore<StoredCredential> set(String key, StoredCredential value) {
-        userDao.updateCredentials(
-                key,
-                value.getAccessToken(),
-                value.getExpirationTimeMilliseconds(),
-                value.getRefreshToken());
+    public DataStore<StoredCredential> set(
+            String userId,
+            StoredCredential storedCredential) {
+        DbCredential dbCredential = dbCredentialDao.getById(userId);
+        boolean newCredential = false;
+        if (dbCredential == null) {
+            newCredential = true;
+            dbCredential = new DbCredential();
+        }
+
+        dbCredential.setUserId(userId);
+        dbCredential.setAccessToken(storedCredential.getAccessToken());
+        dbCredential.setExpirationTimeMilliseconds(
+                storedCredential.getExpirationTimeMilliseconds());
+        String refreshToken = storedCredential.getRefreshToken();
+        if (refreshToken != null) {
+            dbCredential.setRefreshToken(refreshToken);
+        }
+
+        if (newCredential) {
+            dbCredentialDao.insert(dbCredential);
+        } else {
+            dbCredentialDao.update(dbCredential);
+        }
+
         return this;
     }
 
@@ -108,7 +127,7 @@ public class UserDataStore implements DataStore<StoredCredential> {
 
     @Override
     public DataStore<StoredCredential> delete(String userId) {
-        userDao.deleteById(userId);
+        dbCredentialDao.deleteById(userId);
         return this;
     }
 
