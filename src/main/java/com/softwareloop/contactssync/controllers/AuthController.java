@@ -14,7 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.SessionAttribute;
 
@@ -72,7 +72,7 @@ public class AuthController {
     // Login
     //--------------------------------------------------------------------------
 
-    @RequestMapping("/login")
+    @GetMapping("/login")
     public String login(
             HttpSession httpSession,
             UserSession userSession,
@@ -105,7 +105,7 @@ public class AuthController {
     // Google login callback
     //--------------------------------------------------------------------------
 
-    @RequestMapping("/google-login-callback")
+    @GetMapping("/google-login-callback")
     public String googleLoginCallback(
             @RequestParam("code") String code,
             @RequestParam(value = "error", required = false) String error,
@@ -205,19 +205,6 @@ public class AuthController {
                 user.getPicture(),
                 TextUtils.generate128BitRandomString());
         return userSession;
-    }
-
-    //--------------------------------------------------------------------------
-    // Logout
-    //--------------------------------------------------------------------------
-
-    @RequestMapping("/logout")
-    public String logout(
-            HttpSession httpSession,
-            UserSession userSession
-    ) {
-        httpSession.invalidate();
-        return "redirect:/";
     }
 
     //--------------------------------------------------------------------------

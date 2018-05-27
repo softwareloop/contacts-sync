@@ -1,7 +1,7 @@
 package com.softwareloop.contactssync.dao;
 
 import com.mongodb.client.MongoDatabase;
-import com.softwareloop.contactssync.model.PersonEntity;
+import com.softwareloop.contactssync.model.ContactEntity;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 import org.springframework.stereotype.Component;
@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Component
-public class PersonEntityDao extends AbstractDao<ObjectId, PersonEntity> {
+public class ContactEntityDao extends AbstractDao<ObjectId, ContactEntity> {
 
     //--------------------------------------------------------------------------
     // Constants
@@ -24,9 +24,9 @@ public class PersonEntityDao extends AbstractDao<ObjectId, PersonEntity> {
     // Constructors
     //--------------------------------------------------------------------------
 
-    public PersonEntityDao(
+    public ContactEntityDao(
             MongoDatabase mongoDatabase) {
-        super(mongoDatabase, PersonEntity.class);
+        super(mongoDatabase, ContactEntity.class);
     }
 
 
@@ -35,7 +35,7 @@ public class PersonEntityDao extends AbstractDao<ObjectId, PersonEntity> {
     //--------------------------------------------------------------------------
 
     @Override
-    public ObjectId getId(PersonEntity obj) {
+    public ObjectId getId(ContactEntity obj) {
         return obj.getId();
     }
 
@@ -44,7 +44,7 @@ public class PersonEntityDao extends AbstractDao<ObjectId, PersonEntity> {
     // Public methods
     //--------------------------------------------------------------------------
 
-    public List<PersonEntity> getByUserId(String userId) {
+    public List<ContactEntity> getByUserId(String userId) {
         Document query = new Document("userId", userId);
         return collection.find(query).into(new ArrayList<>());
     }

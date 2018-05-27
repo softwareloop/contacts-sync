@@ -3,10 +3,10 @@ package com.softwareloop.contactssync.google;
 import com.google.api.client.auth.oauth2.AuthorizationCodeFlow;
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.services.people.v1.model.Person;
-import com.softwareloop.contactssync.dao.PersonEntityDao;
+import com.softwareloop.contactssync.dao.ContactEntityDao;
+import com.softwareloop.contactssync.model.ContactEntity;
 import com.softwareloop.contactssync.model.GooglePerson;
 import com.softwareloop.contactssync.model.Name;
-import com.softwareloop.contactssync.model.PersonEntity;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -30,7 +30,7 @@ public class GmailSynchronizer {
 
     private final AuthorizationCodeFlow flow;
     private final GmailClient gmailService;
-    private final PersonEntityDao personEntityDao;
+    private final ContactEntityDao personEntityDao;
 
     //--------------------------------------------------------------------------
     // Constructors
@@ -40,7 +40,7 @@ public class GmailSynchronizer {
     public GmailSynchronizer(
             AuthorizationCodeFlow flow,
             GmailClient gmailService,
-            PersonEntityDao personEntityDao
+            ContactEntityDao personEntityDao
     ) {
         this.flow = flow;
         this.gmailService = gmailService;
@@ -54,10 +54,10 @@ public class GmailSynchronizer {
     public void syncContacts(String userId) throws IOException {
         Credential credential = flow.loadCredential(userId);
 
-        List<PersonEntity> personEntities = personEntityDao.getByUserId(userId);
-        Map<String, PersonEntity> personEntitiesMap =
+        List<ContactEntity> personEntities = personEntityDao.getByUserId(userId);
+        Map<String, ContactEntity> personEntitiesMap =
                 new HashMap<>(personEntities.size());
-        for (PersonEntity personEntity : personEntities) {
+        for (ContactEntity personEntity : personEntities) {
             GooglePerson googlePerson = personEntity.getGooglePerson();
             if (googlePerson == null) {
                 continue;
@@ -71,7 +71,7 @@ public class GmailSynchronizer {
 
         for (Person person: contacts) {
             String resourceName = person.getResourceName();
-            PersonEntity personEntity = personEntitiesMap.get(resourceName);
+            ContactEntity personEntity = personEntitiesMap.get(resourceName);
             if (personEntity == null) {
                 // new person: add
                 personEntity = createPersonEntity(userId, person);
@@ -85,7 +85,7 @@ public class GmailSynchronizer {
         }
 
         // Process any remaining entities
-        for (PersonEntity personEntity : personEntitiesMap.values()) {
+        for (ContactEntity personEntity : personEntitiesMap.values()) {
             personEntity.setGooglePerson(null);
             personEntityDao.delete(personEntity);
         }
@@ -95,18 +95,18 @@ public class GmailSynchronizer {
     // Private methods
     //--------------------------------------------------------------------------
 
-    private PersonEntity findPersonEntityByPerson(
-            Map<String, PersonEntity> personEntitiesMap,
+    private ContactEntity findPersonEntityByPerson(
+            Map<String, ContactEntity> personEntitiesMap,
             Person person) {
         String resourceName = person.getResourceName();
         return personEntitiesMap.get(resourceName);
     }
 
-    private PersonEntity createPersonEntity(
+    private ContactEntity createPersonEntity(
             String userId,
             @NotNull Person person
     ) {
-        PersonEntity personEntity = new PersonEntity();
+        ContactEntity personEntity = new ContactEntity();
         personEntity.setUserId(userId);
         GooglePerson googlePerson = new GooglePerson();
         googlePerson.setResourceName(person.getResourceName());
@@ -128,7 +128,7 @@ public class GmailSynchronizer {
     }
 
 
-    private void updatePersonEntity(PersonEntity personEntity, Person person) {
+    private void updatePersonEntity(ContactEntity personEntity, Person person) {
         // TODO
     }
 

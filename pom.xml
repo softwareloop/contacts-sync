@@ -43,6 +43,7 @@
     </parent>
 
     <dependencies>
+        <!-- Spring dependencies -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
@@ -64,12 +65,14 @@
             <optional>true</optional>
         </dependency>
 
+        <!-- Mongodb -->
         <dependency>
             <groupId>org.mongojack</groupId>
             <artifactId>mongojack</artifactId>
             <version>2.8.2</version>
         </dependency>
 
+        <!-- Lombok -->
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
@@ -77,6 +80,7 @@
             <scope>provided</scope>
         </dependency>
 
+        <!-- Google APIs -->
         <dependency>
             <groupId>com.google.apis</groupId>
             <artifactId>google-api-services-people</artifactId>
@@ -86,6 +90,18 @@
             <groupId>com.google.apis</groupId>
             <artifactId>google-api-services-oauth2</artifactId>
             <version>v2-rev134-1.23.0</version>
+        </dependency>
+
+        <!-- SpringFox/Swagger -->
+        <dependency>
+            <groupId>io.springfox</groupId>
+            <artifactId>springfox-swagger2</artifactId>
+            <version>2.7.0</version>
+        </dependency>
+        <dependency>
+            <groupId>io.springfox</groupId>
+            <artifactId>springfox-swagger-ui</artifactId>
+            <version>2.7.0</version>
         </dependency>
 
         <!-- IntelliJ IDEA annotations -->

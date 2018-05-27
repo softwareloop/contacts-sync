@@ -7,7 +7,7 @@ import org.bson.types.ObjectId;
 import java.io.Serializable;
 
 @Data
-public class PersonEntity implements Serializable {
+public class ContactEntity implements Serializable {
     @JsonProperty("_id")
     ObjectId id;
     String userId;

@@ -10,6 +10,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+import javax.servlet.http.HttpSession;
 
 @Slf4j
 @Controller
@@ -64,5 +67,16 @@ public class AppController {
                 TextUtils.escapeJsForInlineScript(userSessionJson));
         return "app";
     }
+
+    @RequestMapping("/logout")
+    public String logout(
+            HttpSession httpSession,
+            UserSession userSession
+    ) {
+        httpSession.invalidate();
+        return "redirect:/";
+    }
+
+
 
 }

@@ -1,6 +1,5 @@
-package com.softwareloop.contactssync.controllers.sync;
+package com.softwareloop.contactssync.controllers;
 
-import com.softwareloop.contactssync.controllers.SimpleResponse;
 import com.softwareloop.contactssync.google.GmailSynchronizer;
 import com.softwareloop.contactssync.security.UserSession;
 import org.springframework.beans.factory.annotation.Autowired;
