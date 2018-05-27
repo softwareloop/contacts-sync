@@ -1,5 +1,6 @@
 package com.softwareloop.contactssync;
 
+import com.softwareloop.contactssync.security.UserSession;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import springfox.documentation.builders.PathSelectors;
@@ -26,7 +27,8 @@ public class SwaggerConfig {
                 .select()
                 .apis(RequestHandlerSelectors.any())
                 .paths(PathSelectors.ant("/api/**"))
-                .build();
+                .build()
+                .ignoredParameterTypes(UserSession.class);
     }
 
 }

@@ -36,7 +36,7 @@ public class ContactEntityDao extends AbstractDao<ObjectId, ContactEntity> {
 
     @Override
     public ObjectId getId(ContactEntity obj) {
-        return obj.getId();
+        return new ObjectId(obj.getId());
     }
 
 
