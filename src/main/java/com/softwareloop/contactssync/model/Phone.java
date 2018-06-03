@@ -3,7 +3,7 @@ package com.softwareloop.contactssync.model;
 import lombok.Data;
 
 @Data
-public class Name {
-    String givenName;
-    String familyName;
+public class Phone {
+    String type;
+    String number;
 }

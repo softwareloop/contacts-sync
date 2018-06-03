@@ -2,16 +2,16 @@ angular.module('app').config(function($locationProvider, $routeProvider) {
     $locationProvider.html5Mode(true);
     $locationProvider.hashPrefix('!');
 
-    $routeProvider.when('/app/contacts', {
-        templateUrl: '/contacts.html',
-        controller: 'DrawerController'
-    }).when('/app/sync', {
-        templateUrl: '/sync.html',
+    $routeProvider.when('/contacts', {
+        templateUrl: '/static/templates/contacts.html',
+        controller: 'ContactsController'
+    }).when('/sync', {
+        templateUrl: '/static/templates/sync.html',
         controller: 'SyncController'
-    }).when('/app/settings', {
-        templateUrl: '/settings.html',
+    }).when('/settings', {
+        templateUrl: '/static/templates/settings.html',
         controller: 'SettingsController'
     }).otherwise({
-        redirectTo: '/app/contacts'
+        redirectTo: '/contacts'
     })
 });

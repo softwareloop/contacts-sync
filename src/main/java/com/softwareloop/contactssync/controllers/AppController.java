@@ -68,15 +68,4 @@ public class AppController {
         return "app";
     }
 
-    @RequestMapping("/logout")
-    public String logout(
-            HttpSession httpSession,
-            UserSession userSession
-    ) {
-        httpSession.invalidate();
-        return "redirect:/";
-    }
-
-
-
 }

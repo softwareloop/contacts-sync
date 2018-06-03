@@ -1,4 +1,4 @@
-package com.softwareloop.contactssync.controllers;
+package com.softwareloop.contactssync.controllers.api;
 
 import lombok.Data;
 

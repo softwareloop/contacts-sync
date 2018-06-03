@@ -1,8 +1,10 @@
 package com.softwareloop.contactssync.dao;
 
+import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoDatabase;
 import com.softwareloop.contactssync.model.ContactEntity;
 import org.bson.Document;
+import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
 import org.springframework.stereotype.Component;
 
@@ -44,9 +46,18 @@ public class ContactEntityDao extends AbstractDao<ObjectId, ContactEntity> {
     // Public methods
     //--------------------------------------------------------------------------
 
-    public List<ContactEntity> getByUserId(String userId) {
+    public List<ContactEntity> getByUserId(String userId, Bson sort) {
         Document query = new Document("userId", userId);
-        return collection.find(query).into(new ArrayList<>());
+        FindIterable<ContactEntity> findIterable = collection.find(query);
+        if (sort != null) {
+            findIterable = findIterable.sort(sort);
+        }
+        return findIterable.into(new ArrayList<>());
+    }
+
+    public void deleteByUserId(String userId) {
+        Document query = new Document("userId", userId);
+        collection.deleteMany(query);
     }
 
 }

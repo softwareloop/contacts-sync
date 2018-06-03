@@ -14,9 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.SessionAttribute;
+import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpSession;
 import java.io.IOException;
@@ -205,6 +203,19 @@ public class AuthController {
                 user.getPicture(),
                 TextUtils.generate128BitRandomString());
         return userSession;
+    }
+
+    //--------------------------------------------------------------------------
+    // Logout
+    //--------------------------------------------------------------------------
+
+    @GetMapping("/logout")
+    public String logout(
+            HttpSession httpSession,
+            UserSession userSession
+    ) {
+        httpSession.invalidate();
+        return "redirect:/";
     }
 
     //--------------------------------------------------------------------------

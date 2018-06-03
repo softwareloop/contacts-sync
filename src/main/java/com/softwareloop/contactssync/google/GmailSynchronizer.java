@@ -6,16 +6,12 @@ import com.google.api.services.people.v1.model.Person;
 import com.softwareloop.contactssync.dao.ContactEntityDao;
 import com.softwareloop.contactssync.model.ContactEntity;
 import com.softwareloop.contactssync.model.GooglePerson;
-import com.softwareloop.contactssync.model.Name;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Component
 public class GmailSynchronizer {
@@ -30,6 +26,7 @@ public class GmailSynchronizer {
 
     private final AuthorizationCodeFlow flow;
     private final GmailClient gmailService;
+    private final GmailModelHelper gmailModelHelper;
     private final ContactEntityDao personEntityDao;
 
     //--------------------------------------------------------------------------
@@ -40,10 +37,11 @@ public class GmailSynchronizer {
     public GmailSynchronizer(
             AuthorizationCodeFlow flow,
             GmailClient gmailService,
-            ContactEntityDao personEntityDao
+            GmailModelHelper gmailModelHelper, ContactEntityDao personEntityDao
     ) {
         this.flow = flow;
         this.gmailService = gmailService;
+        this.gmailModelHelper = gmailModelHelper;
         this.personEntityDao = personEntityDao;
     }
 
@@ -54,7 +52,8 @@ public class GmailSynchronizer {
     public void syncContacts(String userId) throws IOException {
         Credential credential = flow.loadCredential(userId);
 
-        List<ContactEntity> personEntities = personEntityDao.getByUserId(userId);
+        List<ContactEntity> personEntities =
+                personEntityDao.getByUserId(userId, null);
         Map<String, ContactEntity> personEntitiesMap =
                 new HashMap<>(personEntities.size());
         for (ContactEntity personEntity : personEntities) {
@@ -95,41 +94,42 @@ public class GmailSynchronizer {
     // Private methods
     //--------------------------------------------------------------------------
 
-    private ContactEntity findPersonEntityByPerson(
-            Map<String, ContactEntity> personEntitiesMap,
-            Person person) {
-        String resourceName = person.getResourceName();
-        return personEntitiesMap.get(resourceName);
-    }
-
     private ContactEntity createPersonEntity(
             String userId,
             @NotNull Person person
     ) {
         ContactEntity personEntity = new ContactEntity();
         personEntity.setUserId(userId);
-        GooglePerson googlePerson = new GooglePerson();
-        googlePerson.setResourceName(person.getResourceName());
+        GooglePerson googlePerson =
+                gmailModelHelper.createGooglePerson(person);
         personEntity.setGooglePerson(googlePerson);
-        List<Name> names = new ArrayList<>();
-        googlePerson.setNames(names);
-        List<com.google.api.services.people.v1.model.Name> googleNames =
-                person.getNames();
-        if (googleNames == null) {
-            return personEntity;
-        }
-        for (com.google.api.services.people.v1.model.Name googleName : googleNames) {
-            Name name = new Name();
-            name.setGivenName(googleName.getGivenName());
-            name.setFamilyName(googleName.getFamilyName());
-            names.add(name);
-        }
+        updateNames(personEntity);
         return personEntity;
+    }
+
+    private void updateNames(ContactEntity personEntity) {
+        if (updateNamesFromGoogle(personEntity)) {
+            return;
+        }
+        // TODO: try with Linked In
+    }
+
+    private boolean updateNamesFromGoogle(ContactEntity personEntity) {
+        GooglePerson googlePerson = personEntity.getGooglePerson();
+        if (googlePerson == null) {
+            return false;
+        }
+        personEntity.setGivenName(googlePerson.getGivenName());
+        personEntity.setFamilyName(googlePerson.getFamilyName());
+        return true;
     }
 
 
     private void updatePersonEntity(ContactEntity personEntity, Person person) {
-        // TODO
+        GooglePerson googlePerson =
+                gmailModelHelper.createGooglePerson(person);
+        personEntity.setGooglePerson(googlePerson);
+        updateNames(personEntity);
     }
 
 

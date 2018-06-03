@@ -4,5 +4,6 @@ import lombok.Data;
 
 @Data
 public class Email {
-    String email;
+    String type;
+    String address;
 }

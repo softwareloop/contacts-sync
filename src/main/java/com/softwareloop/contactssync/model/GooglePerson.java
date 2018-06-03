@@ -7,5 +7,9 @@ import java.util.List;
 @Data
 public class GooglePerson {
     String resourceName;
-    List<Name> names;
+    String photoUrl;
+    String givenName;
+    String familyName;
+    List<Email> emails;
+    List<Phone> phones;
 }

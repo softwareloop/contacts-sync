@@ -3,17 +3,17 @@ angular.module("app").controller('DrawerController', function($scope, $location,
 
     this.navigateToContacts = function() {
         closeDrawer();
-        $location.path('/app/contacts');
+        $location.path('/contacts');
     };
 
     this.navigateToSync = function() {
         closeDrawer();
-        $location.path('/app/sync');
+        $location.path('/sync');
     };
 
     this.navigateToSettings = function() {
         closeDrawer();
-        $location.path('/app/settings');
+        $location.path('/settings');
     };
 
     function closeDrawer() {

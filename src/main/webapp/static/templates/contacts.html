@@ -1,0 +1,19 @@
+<div class="content-section">
+    <div class="content-section-title mdl-typography--display-1-color-contrast">Contacts</div>
+    <div ng-repeat="contact in contacts" style="margin-bottom: 10px">
+        <div class="mdl-card contact-card mdl-shadow--2dp">
+            <img class="contact-card-photo" src="{{contact.googlePerson.photoUrl}}"/>
+            <div class="mdl-card__title">
+                <h2 class="mdl-card__title-text">{{contact.googlePerson.familyName}}, {{contact.googlePerson.givenName}}&nbsp;<i class="fa fa-google icon-grey"></i></h2>
+            </div>
+            <div class="mdl-card__supporting-text">
+                <div ng-repeat="email in contact.googlePerson.emails">
+                    <span ng-bind="email.type"></span>: <span ng-bind="email.address"></span>
+                </div>
+                <div ng-repeat="phone in contact.googlePerson.phones">
+                    <span ng-bind="phone.type"></span>: <span ng-bind="phone.number"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

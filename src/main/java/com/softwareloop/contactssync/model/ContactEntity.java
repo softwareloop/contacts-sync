@@ -12,5 +12,7 @@ public class ContactEntity implements Serializable {
     @ObjectId
     String id;
     String userId;
+    String givenName;
+    String familyName;
     GooglePerson googlePerson;
 }

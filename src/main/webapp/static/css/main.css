@@ -187,6 +187,21 @@ a img {
     padding-bottom: 24px;
 }
 
+.contact-card {
+    width: 50%;
+}
+
+.contact-card-photo {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 100px;
+    height: 100px;
+}
+.icon-grey {
+    color: #cccccc;
+}
+
 /**** Mobile layout ****/
 @media (max-width: 900px) {
     .android-title {
@@ -231,6 +246,10 @@ a img {
         font-size: 16px;
         margin: 0 16px;
         padding-top: 8px;
+    }
+
+    .contact-card-photo {
+        visibility: hidden;
     }
 }
 

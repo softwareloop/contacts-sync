@@ -6,6 +6,7 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow;
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.jackson2.JacksonFactory;
+import com.google.api.services.people.v1.PeopleServiceScopes;
 import com.mongodb.MongoClient;
 import com.mongodb.client.MongoDatabase;
 import com.softwareloop.contactssync.security.CredentialDataStore;
@@ -44,7 +45,7 @@ public class ContactsSyncApplication extends WebMvcConfigurerAdapter {
             "openid",
             "email",
             "profile",
-            "https://www.googleapis.com/auth/contacts");
+            PeopleServiceScopes.CONTACTS);
 
     //--------------------------------------------------------------------------
     // Fields
